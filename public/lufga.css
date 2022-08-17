@@ -1,0 +1,6 @@
+/* Local polyfill for the Lufga font */
+
+@font-face {
+  font-family: 'Lufga';
+  src: url('./lufga-regular-webfont.woff2');
+}

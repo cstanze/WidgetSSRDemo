@@ -1,0 +1,68 @@
+<!--
+~ Kagi.version: 1.0
+~ Kagi.meta.name: Interactive Test
+~ Kagi.meta.description: Interactive Test
+~ Kagi.meta.author: Jules Nieves
+~ Kagi.meta.id: com.julesnieves.interactive
+~ Kagi.meta.category: Other
+~ Kagi.config.position: top
+~ Kagi.config.size: default
+~ Kagi.triggers: search:/(mlb|baseball) scores?/gi, search:/test/gi
+~ Kagi.permissions:
+-->
+ 
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      .demoArea {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+    </style>
+ 
+    <script>
+      // Preload the Lufga font if it's not already loaded
+      if (!('KagiWidgets' in window)) {
+        var link = document.createElement('link')
+        link.setAttribute('rel', 'stylesheet')
+        link.setAttribute('type', 'text/css')
+        link.setAttribute('href', './lufga_poly.css') // loads the polyfill
+        document.head.appendChild(link)
+      }
+    </script>
+  </head>
+  <body>
+    <div class="demoArea">
+      <h1 id="demoHeader">Testing Interactivity</h1>
+      <button id="demoButton">Ready to test the interactive capabilities?</button>
+      <noscript>
+        <h2>You will not be able to run this demo without JavaScript enabled.</h2>
+      </noscript>
+    </div>
+
+    <script>
+      if (!('KagiWidgets' in window)) {
+        // Simple polyfill for KagiWidgets
+        
+        // missing most of the functionality
+        // because it's not really needed 
+        window.KagiWidgets = {
+          finishedLoading: () => {
+            // do nothing
+          }
+        }
+      }
+
+      (async () => { // async makes this easier to work with
+        document.querySelector('#demoButton').addEventListener('click', () => {
+          document.querySelector('#demoHeader').innerText = 'Interactivity works!'
+        })
+
+        KagiWidgets.finishedLoading()
+      })()
+    </script>
+  </body>
+</html>

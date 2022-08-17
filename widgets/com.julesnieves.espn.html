@@ -1,0 +1,192 @@
+<!--
+~ Kagi.version: 1.0
+~ Kagi.meta.name: ESPN Scores
+~ Kagi.meta.description: Scores from ESPN for baseball
+~ Kagi.meta.author: Jules Nieves
+~ Kagi.meta.id: com.julesnieves.espn
+~ Kagi.meta.category: Entertainment
+~ Kagi.config.position: top
+~ Kagi.config.size: default
+~ Kagi.triggers: search:/(mlb|baseball) scores?/gi, inresult:/espn.com\/mlb\/.+\/gameId\/([0-9]+)/g
+~ Kagi.permissions:
+-->
+ 
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      #espn-live-scores {
+        display: flex;
+        flex-direction: column;
+      }
+
+      #espn-live-scores > .stateHeader {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        align-items: center;
+      }
+ 
+      #espn-live-scores > .detailedState {
+        display: flex;
+        flex: 1;
+        flex-direction: row;
+        justify-content: space-around;
+        margin-top: 10px;
+      }
+ 
+      #espn-live-scores h1,
+      #espn-live-scores span {
+        font-family: 'Lufga', sans-serif;
+        text-align: center;
+      }
+ 
+      .stateHeader > h1 {
+        font-size: 2em;
+        margin: 0;
+        margin-bottom: 4px;
+      }
+ 
+ 
+      .shortName {
+        font-size: 1.25rem;
+        /* font-weight: bold; */
+        opacity: 0.85;
+      }
+ 
+      .date {
+        align-self: center;
+        font-size: 1.25rem;
+        /* font-weight: bold; */
+        opacity: 0.85;
+      }
+ 
+      .atMid {
+        left: 35%;
+        /* font-weight: bold; */
+        font-size: 1.25rem;
+        opacity: 0.85;
+      }
+ 
+      .atMid.atSign {
+        margin: 0 5px;
+      }
+ 
+      .detailedState div > img {
+        width: 25%;
+        height: auto;
+        align-self: center;
+      }
+ 
+      .detailedState div > span.score {
+        font-weight: bold;      
+        font-size: 1.5rem;
+        /* opacity: 0.85; */
+      }
+ 
+      .detailedState div {
+        display: flex;
+        flex-direction: column;
+      }
+    </style>
+ 
+    <script>
+      // Preload the Lufga font if it's not already loaded
+      if (!('KagiWidgets' in window)) {
+        var link = document.createElement('link')
+        link.setAttribute('rel', 'stylesheet')
+        link.setAttribute('type', 'text/css')
+        link.setAttribute('href', './lufga_poly.css') // loads the polyfill
+        document.head.appendChild(link)
+      }
+    </script>
+  </head>
+  <body>
+    <!-- <h1>ESPN Live Scores</h1> -->
+    <div id="espn-live-scores">
+      <h1>Loading...</h1>
+    </div>
+    <script>
+      if (!('KagiWidgets' in window)) {
+        // Simple polyfill for KagiWidgets
+        window.KagiWidgets = {
+          getQuery: function() {
+            return "mlb scores";
+          },
+          inResultMatches: function() {
+            return [
+              "https://www.espn.com/mlb/boxscore/_/gameId/401463303"
+            ]
+          },
+          get: async (url, opts = {}) => {
+            const res = await fetch(url, opts)
+            const data = await res.json()
+            return data
+          },
+
+          finishedLoading: () => {
+            // do nothing
+          }
+        }
+      }
+
+      (async () => { // async makes this easier to work with
+        let gameId = ''
+        let matches = KagiWidgets.inResultMatches("com.julesnieves.espn") || []
+        if (matches.length > 0) {
+          gameId = KagiWidgets.inResultMatches()[0].match(/gameId\/([0-9]+)/)[1]
+        } else {
+          // TODO: carousel of all available games
+          let data = await KagiWidgets.get('https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard')
+          gameId = data.events[0].id
+        }
+
+        // assume by this point we have the gameId, in the future we'd display
+        // a carousel for multiple games matching the query
+        console.log(gameId)
+
+        const espnLiveScores = document.getElementById('espn-live-scores')
+         // get specific game data
+        const event = await KagiWidgets.get(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard/${gameId}`)
+        console.log(event)
+
+        let home = event["competitions"][0]["competitors"]
+          .find(competitor => competitor["homeAway"] == "home")
+        let away = event["competitions"][0]["competitors"]
+          .find(competitor => competitor["homeAway"] == "away")
+        espnLiveScores.innerHTML = `
+          <div class="stateHeader">
+            <h1>${event["name"]}</h1>
+            <span class="date">
+              ${
+                event["status"]["type"]["completed"] ?
+                  "Ended " + new Date(event["date"]).toLocaleDateString() :
+                  new Date(event["date"]).toLocaleString()
+                    + " - "
+                    + event["status"]["type"]["description"]
+                    + " "
+                    + event["status"]["type"]["detail"]
+              }
+            </span>
+            <!-- <span class="shortName">${event["shortName"]}</span> -->
+          </div>
+          <div class="detailedState">
+            <div class="away">
+              <img src="${away["team"]["logo"]}" alt="${away["team"]["name"]} Logo">
+              <span class="score">${away["score"]}</span>
+            </div>
+            <span class="atMid">${away["team"]["abbreviation"]}</span>
+            <span class="atMid atSign">@</span>
+            <span class="atMid">${home["team"]["abbreviation"]}</span>
+            <div class="home">
+              <img src="${home["team"]["logo"]}" alt="${home["team"]["name"]} Logo">
+              <span class="score">${home["score"]}</span>
+            </div>
+          </div>
+        `
+
+        KagiWidgets.finishedLoading()
+      })()
+    </script>
+  </body>
+</html>
